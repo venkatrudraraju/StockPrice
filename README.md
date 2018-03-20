@@ -1,6 +1,6 @@
 ####  Predicting Stock Price-Performance comparison of ARIMA models with supervised learning algorithms   ####
 
-#Download data from Yahoo finance using quantmod package
+# Download data from Yahoo finance using quantmod package
 library(quantmod)
 RBC=getSymbols('RY.TO', from='2011-01-01', to='2017-12-31', auto.assign = FALSE)
 
