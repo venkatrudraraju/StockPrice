@@ -18,7 +18,7 @@ sum(is.na(closingP))
 
 closingP=na.omit(closingP)
 
-# here, we can see that we have only 1 missing value and hence we can simply delete it. otherwise, we have to impute all the missing values with median.
+here, we can see that we have only 1 missing value and hence we can simply delete it. otherwise, we have to impute all the missing values with median.
 
 
 # For time series analysis we will transform dataframe into time series dataset 
@@ -30,7 +30,7 @@ tsclosingP=ts(closingP, start = c(2011, 1), end=c(2017,1), frequency = 12)
 
 plot(tsclosingP, xlab='Years', ylab = 'Closing Price')
 
-# It shows upward trend, seems to be non-stationary
+This shows upward trend, seems to be non-stationary
 
 
 # stationarity check using Augmented Dickey-Fuller (ADF) test
@@ -41,7 +41,7 @@ library(tseries)
 
 adf.test(tsclosingP, alternative = "stationary")
 
-#here With a p-value >0.05, we cannot reject the null hypothesis of non-stationarity in our series.
+Here with a p-value >0.05, we cannot reject the null hypothesis of non-stationarity in our series.
 
 
 # make the data stationary by differencing with 1,2,3...etc. until p-value is <0.05
