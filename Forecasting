@@ -1,3 +1,5 @@
+### FORECASTING ###
+
 # Download RBC historical data from Yahoo finance using quantmod package
 library(quantmod)
 RBC=getSymbols('RY.TO', from='2011-01-01', to='2017-12-31', auto.assign = FALSE)
@@ -41,10 +43,9 @@ Acf(tsclosingP, main='ACF for Differenced Series') #identifying q value-indices 
 Pacf(tsclosingP, main='PACF for Differenced Series') #identifying p value-indices exceeding 95% significance boundary(blue dotted lines)
 
 
-# Modeling with ARIMA and Evaluating its prediction accuracy
+# MODELING WITH ARIMA AND EVALUATING ITS PREDICTION ACCURACY
 fitArima= auto.arima(tsclosingP, seasonal=FALSE)
 accuracy(fitArima)
-
 
 # Forecasting with ARIMA
 library(forecast)
@@ -52,10 +53,9 @@ forecastA=forecast(fitArima)
 plot(forecastA)
 
 
-# Modeling with Neural Networks  and Evaluating its accuracy
+# MODELING WITH NEURAL NETWORKS AND EVALUATING ITS ACCURACY
 fitNn <- nnetar(tsclosingP)
 accuracy(fitNn)
-
 
 # Forecasting with Neural Networks
 forecastN=forecast(fitNn)
