@@ -62,7 +62,7 @@ Acf(tsclosingP, main='ACF for Differenced Series') #identifying q value-indices 
 Pacf(tsclosingP, main='PACF for Differenced Series') #identifying p value-indices exceeding 95% significance boundary(blue dotted lines)
 
 
-#### Modeling with ARIMA and Evaluating its prediction accuracy#### 
+# Modeling with ARIMA and Evaluating its prediction accuracy
 
 fitArima= auto.arima(tsclosingP, seasonal=FALSE)
 
@@ -78,7 +78,7 @@ forecastA=forecast(fitArima)
 plot(forecastA)
 
 
-#### Modeling with Neural Networks  and Evaluating its accuracy #####
+# Modeling with Neural Networks  and Evaluating its accuracy
 
 fitNn <- nnetar(tsclosingP)
 
