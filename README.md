@@ -1,6 +1,6 @@
-# Predicting Stock Price-Performance comparison of ARIMA models with supervised learning algorithms  #
+# Performance comparison of ARIMA models with supervised learning algorithms to develop a higher accuracy prediction model for stock price forecasting on the Toronto Stock Exchange
 
-# Download data from Yahoo finance using quantmod package
+# Download RBC historical data from Yahoo finance using quantmod package
 
 library(quantmod)
 
