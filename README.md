@@ -1,4 +1,4 @@
-#####  Predicting Stock Price-Performance comparison of ARIMA models with supervised learning algorithms   #####
+# Predicting Stock Price-Performance comparison of ARIMA models with supervised learning algorithms  #
 
 # Download data from Yahoo finance using quantmod package
 
