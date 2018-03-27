@@ -1,13 +1,20 @@
 ### FORECASTING ###
 
-# Download RBC historical data from Yahoo finance using quantmod package
+#### Load the required packages  ####
+library(quantmod) # quantmod package for downloading data from Yahoo finanace
+library(tseries)
+library(forecast)
+library(randomForest)
+
+
+#### Download RBC historical data Yahoo finance using quantmod package ####
 library(quantmod)
 RBC=getSymbols('RY.TO', from='2011-01-01', to='2017-12-31', auto.assign = FALSE)
 
 
 # Select closing price as a measure for stock price.  
 closingP = RBC[,4]
-
+plot(closingP, xlab='Years', ylab = 'Closing Price')
 
 # checking data for any missing values. 
 sum(is.na(closingP))
@@ -24,39 +31,54 @@ plot(tsclosingP, xlab='Years', ylab = 'Closing Price')
 This shows upward trend, seems to be non-stationary
 
 
-# stationarity check using Augmented Dickey-Fuller (ADF) test
-install.packages("tseries")
-library(tseries)
+#### stationarity check using Augmented Dickey-Fuller (ADF) test ####
 adf.test(tsclosingP, alternative = "stationary")
 Here with a p-value >0.05, we cannot reject the null hypothesis of non-stationarity in our series.
 
 
 # make the data stationary by differencing with 1,2,3...etc. until p-value is <0.05
 tsclosingP_diff1 = diff(tsclosingP, differences = 1)
-plot.ts(tsclosingP_diff1, ylab='Differenced closing prices')
 adf.test(tsclosingP_diff1, alternative="stationary")
+plot.ts(tsclosingP_diff1, ylab='Differenced closing prices')
 
 
-# Autocorrelations for choosing the order parameters for ARIMA model 
-library(forecast)
-Acf(tsclosingP, main='ACF for Differenced Series') #identifying q value-indices exceeding 95% significance boundary(blue dotted lines)
-Pacf(tsclosingP, main='PACF for Differenced Series') #identifying p value-indices exceeding 95% significance boundary(blue dotted lines)
+#####  ACF and PACF graphs for checking significant lags and choosing the order parameters for ARIMA model   ######
+# finding MA terms or q values: 
+Acf(tsclosingP, main='ACF for Differenced Series')
+Acf(tsclosingP, lag.max = 100, plot = F) 
+# finding AR terms or p values:
+Pacf(tsclosingP, main='PACF for Differenced Series') 
+pacf(tsclosingP, lag.max = 100, plot = F) 
 
 
-# MODELING WITH ARIMA AND EVALUATING ITS PREDICTION ACCURACY
-fitArima= auto.arima(tsclosingP, seasonal=FALSE)
-accuracy(fitArima)
+#### Fitting an ARIMA model ####
+# Identification of best fit ARIMA model by explicitly specifying the order of the model. The best model is selected with smallest AIC.
+fitA=arima(tsclosingP, order = c(0,1,1))
+fitA=arima(tsclosingP, order = c(0,1,2))
+we can see that MA(1) has coefficient far away from 1 implies that it is stationary. Also, lesser value of AIC compared to MA(2). therefore MA(1) is the good fit for the model.     
 
-# Forecasting with ARIMA
-library(forecast)
-forecastA=forecast(fitArima)
-plot(forecastA)
+# auto.arima() automatically generate a set of optimal parameters (p, d, q) with lowest AIC. 
+fitA=auto.arima(tsclosingP, seasonal=FALSE) #non-seasonal ARIMA model.
+
+# Price Forecast
+forecastA=forecast(fitA, h=5)
+accuracy(forecastA)
+plot(forecastA, xlab="Years", ylab="RBC forecasted Price" )
+
+# Residual Diagonostics
+fitA_resid=residuals(fitA)
+Box.test(fitA_resid, type="Ljung-Box")
+we see that we have an insignificant p-value at all lags. This means that there is likely a high degree of randomness exhibited by our residuals (consistent with a random walk with drift model) and therefore our ARIMA model is free of autocorrelation.
 
 
 # MODELING WITH NEURAL NETWORKS AND EVALUATING ITS ACCURACY
-fitNn <- nnetar(tsclosingP)
-accuracy(fitNn)
+fitN <- nnetar(tsclosingP,seasonal=FALSE)
+forecastN=forecast(fitN, h=5)
+accuracy(forecastN)
+plot(forecastN, xlab="Years", ylab="RBC forecasted Price")
 
-# Forecasting with Neural Networks
-forecastN=forecast(fitNn)
-plot(forecastN)
+
+#### RANDOM FOREST  #####
+fitR = randomForest(tsclosingP ~.,data = tsclosingP, ntree=50)
+predictR=predict(fitR, n.ahead=5)
+plot(predictR, xlab="Years", ylab="Price for RBCstock")
