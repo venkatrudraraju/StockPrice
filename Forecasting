@@ -1,18 +1,19 @@
 ### FORECASTING ###
 
-#### Load the required packages  ####
+#### LOAD THE REQUIRED R PACKAGES  ####
 library(quantmod) # quantmod package for downloading data from Yahoo finanace
 library(tseries)
 library(forecast)
 library(randomForest)
 
 
-#### Download RBC historical data Yahoo finance using quantmod package ####
+####  IMPORTING RBC STOCKS HISTORICAL DATA FROM YAHOO FINANCE #### 
 RBC=getSymbols('RY.TO', from='2011-01-01', to='2017-12-31', auto.assign = FALSE)
 # Or Download the data from csv file in the folder.
 #RBC = read.csv("......./RBC.csv", header=TRUE, stringsAsFactors=FALSE)
 
-# Select closing price as a measure for stock price.  
+
+#### SELECTING CLOSING PRICE AS A MEASURE FOR STOCK PRICE ####  
 closingP = RBC[,4]
 plot(closingP, xlab='Years', ylab = 'Closing Price')
 
@@ -22,9 +23,8 @@ closingP=na.omit(closingP)
 Here, we can see that we have only 1 missing value and hence we can simply delete it. otherwise, we have to impute all the missing values with median.
 
 
-# For time series analysis we will transform dataframe into time series dataset 
+#### For time series analysis we will transform dataframe into time series dataset ####
 tsclosingP=ts(closingP, start = c(2011, 1), end=c(2017,1), frequency = 12)
-
 
 # Plotting the data [Years on x-axis and Closing Price on Y-axis]  
 plot(tsclosingP, xlab='Years', ylab = 'Closing Price')
@@ -35,14 +35,12 @@ This shows upward trend, seems to be non-stationary
 adf.test(tsclosingP, alternative = "stationary")
 Here with a p-value >0.05, we cannot reject the null hypothesis of non-stationarity in our series.
 
-
 # make the data stationary by differencing with 1,2,3...etc. until p-value is <0.05
 tsclosingP_diff1 = diff(tsclosingP, differences = 1)
 adf.test(tsclosingP_diff1, alternative="stationary")
 plot.ts(tsclosingP_diff1, ylab='Differenced closing prices')
 
-
-#####  ACF and PACF graphs for checking significant lags and choosing the order parameters for ARIMA model   ######
+#  ACF and PACF graphs for checking significant lags and choosing the order parameters for ARIMA model   
 # finding MA terms or q values: 
 Acf(tsclosingP, main='ACF for Differenced Series')
 Acf(tsclosingP, lag.max = 100, plot = F) 
@@ -71,7 +69,7 @@ Box.test(fitA_resid, type="Ljung-Box")
 we see that we have an insignificant p-value at all lags. This means that there is likely a high degree of randomness exhibited by our residuals (consistent with a random walk with drift model) and therefore our ARIMA model is free of autocorrelation.
 
 
-# MODELING WITH NEURAL NETWORKS AND EVALUATING ITS ACCURACY
+#### MODELING WITH NEURAL NETWORKS AND EVALUATING ITS ACCURACY ####
 fitN <- nnetar(tsclosingP,seasonal=FALSE)
 forecastN=forecast(fitN, h=5)
 accuracy(forecastN)
