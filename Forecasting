@@ -8,9 +8,9 @@ library(randomForest)
 
 
 #### Download RBC historical data Yahoo finance using quantmod package ####
-library(quantmod)
 RBC=getSymbols('RY.TO', from='2011-01-01', to='2017-12-31', auto.assign = FALSE)
-
+# Or Download the data from csv file in the folder.
+#RBC = read.csv("......./RBC.csv", header=TRUE, stringsAsFactors=FALSE)
 
 # Select closing price as a measure for stock price.  
 closingP = RBC[,4]
@@ -51,7 +51,7 @@ Pacf(tsclosingP, main='PACF for Differenced Series')
 pacf(tsclosingP, lag.max = 100, plot = F) 
 
 
-#### Fitting an ARIMA model ####
+#### ARIMA MODELLING AND EVALUATING ITS ACCURACY ####
 # Identification of best fit ARIMA model by explicitly specifying the order of the model. The best model is selected with smallest AIC.
 fitA=arima(tsclosingP, order = c(0,1,1))
 fitA=arima(tsclosingP, order = c(0,1,2))
@@ -60,7 +60,7 @@ we can see that MA(1) has coefficient far away from 1 implies that it is station
 # auto.arima() automatically generate a set of optimal parameters (p, d, q) with lowest AIC. 
 fitA=auto.arima(tsclosingP, seasonal=FALSE) #non-seasonal ARIMA model.
 
-# Price Forecast
+# Price Forecasting
 forecastA=forecast(fitA, h=5)
 accuracy(forecastA)
 plot(forecastA, xlab="Years", ylab="RBC forecasted Price" )
@@ -78,7 +78,7 @@ accuracy(forecastN)
 plot(forecastN, xlab="Years", ylab="RBC forecasted Price")
 
 
-#### RANDOM FOREST  #####
+#### MODELING WITH RANDOM FOREST AND EVALUATING ITS ACCURACY  #####
 fitR = randomForest(tsclosingP ~.,data = tsclosingP, ntree=50)
 predictR=predict(fitR, n.ahead=5)
 plot(predictR, xlab="Years", ylab="Price for RBCstock")
