@@ -9,10 +9,10 @@ library(randomForest)
 
 
 ####  IMPORTING RBC STOCKS HISTORICAL DATA FROM YAHOO FINANCE #### 
-RBC=getSymbols('RY.TO', from='2011-01-01', to='2017-12-31', auto.assign = FALSE)
+RBC=getSymbols('RY.TO', from='2011-01-01', to='2018-02-28', auto.assign = FALSE) #RBC stocks historical data on TSX
 # Or Download the data from csv file in the folder.
 #RBC = read.csv("......./RBC.csv", header=TRUE, stringsAsFactors=FALSE)
-
+dim(as.matrix(RBC))
 
 #### SELECTING CLOSING PRICE AS A MEASURE FOR STOCK PRICE ####  
 closingP = RBC[,4]
@@ -23,24 +23,28 @@ sum(is.na(closingP))
 closingP=na.omit(closingP)
 Here, we can see that we have only 1 missing value and hence we can simply delete it. otherwise, we have to impute all the missing values with median.
 
+# Data Exploration
+start(closingP)
+end(closingP)
+frequency(closingP)
+dim(as.matrix(closingP)) 
+class(closingP)
+
+# Descriptive Statistics
+head(closingP) #display Top 10 daily closing prices 
+tail(closingP) #display bottom 10 daily closing prices
+str(closingP)
+rbcHret = Return.calculate(closingP, method="simple") #RBC historical daily returns 
+hist(rbcHret,main="",xlim=c(-0.06,0.06), col = "light blue")  # Histogram for the verification data distribution. Data must normalised or adjusted before we fit any model. 
+plot(closingP, xlab='Years', ylab = 'Closing Price') # Plot the data 
 
 #### Transforming input into time series dataset ####
 # For time series analysis we will transform dataframe into time series dataset 
-tsclosingP=ts(closingP, start = c(2011, 1), end=c(2017,12), frequency = 12)
+tsclosingP=ts(closingP, start = c(2011, 1), end=c(2018,02), frequency = 12) # frequency = 12 corresponds to monthly data
+class(tsclosingP)
 
-
-#### DESCRIPTIVE STATISTICS ####
-tsclosingP #display monthly RBC stocks historical data
-rbcHret = Return.calculate(tsclosingP, method="simple") #RBC historical monthly returns 
-
-layout(mat = matrix(c(1,2),2,1, byrow=TRUE),  height = c(6,2))
-par(mar=c(3.1, 3.1, 1.1, 2.1))
-hist(rbcHret,main="",xlim=c(-0.06,0.06), col = "light blue")  # Histogram for the verification of normalization
-boxplot(rbcHret, horizontal=TRUE,  outline=TRUE, ylim=c(-0.06,0.06), frame=F, col = "light green", width = 2)   #Boxplot for checking any Outliers
-
-
-# Plotting the data [Years on x-axis and Closing Price on Y-axis]  
-plot(tsclosingP, xlab='Years', ylab = 'Closing Price')
+# Plot the data  
+plot(tsclosingP, main="RBC monthly historical data of Closing price", xlab='Years', ylab = 'Closing Price', lwd=1, col="blue2") 
 This shows upward trend, seems to be non-stationary
 
 #### DEVELOPING AN ARIMA MODEL AND ANALYSIS OF MODEL ####
@@ -64,39 +68,46 @@ pacf(tsclosingP, lag.max = 100, plot = F)
 
 #### ARIMA MODELLING AND EVALUATING ITS ACCURACY ####
 # Identification of best fit ARIMA model by explicitly specifying the order of the model. The best model is selected with smallest AIC.
-fitA=arima(tsclosingP, order = c(0,1,1))
-fitA=arima(tsclosingP, order = c(0,1,2))
+fitA=arima(closingP, order = c(0,1,1))  # MA(1)--> 1st order moving average model
+fitA=arima(closingP, order = c(0,1,2))  # MA(2)-->  2nd order moving average model
 we can see that MA(1) has coefficient far away from 1 implies that it is stationary. Also, lesser value of AIC compared to MA(2). therefore MA(1) is the good fit for the model.     
 
 # auto.arima() automatically generate a set of optimal parameters (p, d, q) with lowest AIC. 
-fitA=auto.arima(tsclosingP, seasonal=FALSE) #non-seasonal ARIMA model.
-
-# Forecasting with ARIMA Model 
-forecastA=forecast(fitA, h=5)
-accuracy(forecastA)
-plot(forecastA, xlab="Years", ylab="RBC forecasted Price" )
+fitA=auto.arima(closingP, seasonal=FALSE) #non-seasonal ARIMA model.
+fitA
 
 # Residual Diagonostics
 fitA_resid=residuals(fitA)
 Box.test(fitA_resid, type="Ljung-Box")
 we see that we have an insignificant p-value at all lags. This means that there is likely a high degree of randomness exhibited by our residuals (consistent with a random walk with drift model) and therefore our ARIMA model is free of autocorrelation.
 
+# Forecasting with ARIMA Model 
+set.seed(123)
+forecastA=forecast(fitA, 23)
+forecastA
+accuracy(forecastA)
+plot(forecastA, xlab=" ", ylab="RBC forecasted Price", col='green' )
+
 
 #### MODELING WITH NEURAL NETWORKS AND EVALUATING ITS ACCURACY ####
-fitN <- nnetar(tsclosingP,seasonal=FALSE)
+set.seed(123)
+fitN <- nnetar(closingP,seasonal=FALSE) # nnetar function in the forecast package for R fits a feed-forward neural network model to a time series 
+fitN
 
 # Forecasting with ANN Model
-forecastN=forecast(fitN, h=5)
+forecastN=forecast(fitN, 23)
+forecastN
 accuracy(forecastN)
-plot(forecastN, xlab="Years", ylab="RBC forecasted Price")
+plot(forecastN, xlab=" ", ylab="RBC forecasted Price", col='green')
 
 
 #### MODELING WITH RANDOM FOREST AND EVALUATING ITS ACCURACY  #####
 set.seed(123)
-fitR = randomForest(RBC$RY.TO.Close ~., data = RBC, importance=TRUE,proximity=TRUE, na.action=na.exclude)
+fitR = randomForest(RBC$RY.TO.Close ~., data = RBC,  seasonal=FALSE, importance=TRUE,proximity=TRUE, na.action=na.exclude)
 fitR
 
 # Forecasting with Random Forest Model
-predictR=predict(fitR, n.ahead=5)
-accuracy(predict(fitR,n.ahead=5),closingP)
-plot(predictR, xlab=" ", ylab="Price for RBCstock")
+predictR=predict(fitR)
+tail(predictR,23)
+accuracy(predict(fitR),closingP)
+plot(predictR, xlab=" ", ylab="RBC forecasted Price", col='light green')
